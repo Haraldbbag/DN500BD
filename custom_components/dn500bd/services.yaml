@@ -1,0 +1,90 @@
+goto_chapter:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    chapter:
+      required: true
+      example: 3
+      selector:
+        number:
+          min: 1
+          max: 2000
+          mode: box
+
+goto_title:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    title:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 2000
+          mode: box
+
+scan:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    direction:
+      required: true
+      default: forward
+      selector:
+        select:
+          translation_key: scan_direction
+          options:
+            - forward
+            - reverse
+    speed:
+      required: false
+      default: fast
+      selector:
+        select:
+          translation_key: scan_speed
+          options:
+            - fast
+            - slow
+
+tray:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    action:
+      required: true
+      selector:
+        select:
+          translation_key: tray_action
+          options:
+            - open
+            - close
+
+send_raw:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    command:
+      required: true
+      example: "@0?ST"
+      selector:
+        text:
+    window:
+      required: false
+      default: 0.6
+      selector:
+        number:
+          min: 0.05
+          max: 5
+          step: 0.05
+          unit_of_measurement: s

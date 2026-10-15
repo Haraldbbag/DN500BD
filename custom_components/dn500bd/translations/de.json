@@ -1,0 +1,181 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Denon DN-500BD MKII",
+        "description": "IP-Steuerung über TCP-Port 9030. Player vor dem Hinzufügen einschalten, damit die MAC-Adresse gelesen werden kann.",
+        "data": {
+          "name": "Name",
+          "host": "Host / IP-Adresse",
+          "port": "Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Keine Verbindung zum Player.",
+      "unknown": "Unerwarteter Fehler."
+    },
+    "abort": {
+      "already_configured": "Dieser Player ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Abfrage und Protokoll",
+        "data": {
+          "poll_playing": "Abfrageintervall bei Wiedergabe (s)",
+          "poll_idle": "Abfrageintervall sonst (s)",
+          "ack_timeout_ms": "ACK-Timeout (ms)",
+          "answer_timeout_ms": "Antwort-Timeout (ms)",
+          "reverse_code": "Richtungscode für Rückwärts-Scan",
+          "ack_notifications": "Statusmeldungen quittieren (ACK)"
+        },
+        "data_description": {
+          "reverse_code": "Von Denon nicht dokumentiert. Standard 'R'; ändern, falls Rückwärts-Scan mit NACK abgelehnt wird.",
+          "ack_timeout_ms": "Protokoll nennt 30 ms; mehr Luft vermeidet Fehl-Timeouts."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "timecode": {
+        "name": "Timecode"
+      },
+      "remaining": {
+        "name": "Restzeit"
+      },
+      "elapsed_seconds": {
+        "name": "Laufzeit Sekunden"
+      },
+      "chapter": {
+        "name": "Kapitel"
+      },
+      "chapters_total": {
+        "name": "Kapitel im Titel"
+      },
+      "title": {
+        "name": "Titel"
+      },
+      "titles_total": {
+        "name": "Titel auf Disc"
+      },
+      "transport": {
+        "name": "Transport"
+      },
+      "disc": {
+        "name": "Disc-Status"
+      },
+      "disc_type": {
+        "name": "Disc-Typ"
+      },
+      "audio_format": {
+        "name": "Audioformat"
+      },
+      "audio_channels": {
+        "name": "Audiokanäle"
+      }
+    },
+    "button": {
+      "scan_forward": {
+        "name": "Suchlauf vorwärts"
+      },
+      "scan_reverse": {
+        "name": "Suchlauf rückwärts"
+      },
+      "next_title": {
+        "name": "Nächster Titel"
+      },
+      "previous_title": {
+        "name": "Vorheriger Titel"
+      },
+      "tray_open": {
+        "name": "Lade öffnen"
+      },
+      "tray_close": {
+        "name": "Lade schließen"
+      }
+    }
+  },
+  "selector": {
+    "scan_direction": {
+      "options": {
+        "forward": "Vorwärts",
+        "reverse": "Rückwärts"
+      }
+    },
+    "scan_speed": {
+      "options": {
+        "fast": "Schnell",
+        "slow": "Langsam"
+      }
+    },
+    "tray_action": {
+      "options": {
+        "open": "Öffnen",
+        "close": "Schließen"
+      }
+    }
+  },
+  "services": {
+    "goto_chapter": {
+      "name": "Kapitel anspringen",
+      "description": "Springt zu einem Kapitel im aktuellen Titel.",
+      "fields": {
+        "chapter": {
+          "name": "Kapitel",
+          "description": "1–2000"
+        }
+      }
+    },
+    "goto_title": {
+      "name": "Titel anspringen",
+      "description": "Springt zu einem Titel auf der Disc.",
+      "fields": {
+        "title": {
+          "name": "Titel",
+          "description": "1–2000"
+        }
+      }
+    },
+    "scan": {
+      "name": "Suchlauf",
+      "description": "Suchlauf vorwärts oder rückwärts. Play kehrt zur normalen Wiedergabe zurück.",
+      "fields": {
+        "direction": {
+          "name": "Richtung",
+          "description": "Vorwärts oder rückwärts."
+        },
+        "speed": {
+          "name": "Geschwindigkeit",
+          "description": "Schneller Suchlauf oder Zeitlupe."
+        }
+      }
+    },
+    "tray": {
+      "name": "Disc-Lade",
+      "description": "Disc-Lade öffnen oder schließen.",
+      "fields": {
+        "action": {
+          "name": "Aktion",
+          "description": "Öffnen oder schließen."
+        }
+      }
+    },
+    "send_raw": {
+      "name": "Rohbefehl senden",
+      "description": "Sendet einen beliebigen Protokollbefehl und liefert ACK/NACK und alle empfangenen Pakete zurück. Zum Testen.",
+      "fields": {
+        "command": {
+          "name": "Befehl",
+          "description": "Z. B. @0?ST oder ?ST (@0 und CR werden ergänzt)."
+        },
+        "window": {
+          "name": "Mithördauer",
+          "description": "Wie lange Antworten gesammelt werden."
+        }
+      }
+    }
+  }
+}

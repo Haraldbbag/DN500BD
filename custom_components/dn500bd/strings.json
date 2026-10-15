@@ -1,0 +1,181 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Denon DN-500BD MKII",
+        "description": "IP control on TCP port 9030. Switch the player on before adding it so its MAC address can be read.",
+        "data": {
+          "name": "Name",
+          "host": "Host / IP address",
+          "port": "Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the player.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This player is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling and protocol",
+        "data": {
+          "poll_playing": "Poll interval while playing (s)",
+          "poll_idle": "Poll interval otherwise (s)",
+          "ack_timeout_ms": "ACK timeout (ms)",
+          "answer_timeout_ms": "Answer timeout (ms)",
+          "reverse_code": "Direction code for reverse scan",
+          "ack_notifications": "Acknowledge status notifications"
+        },
+        "data_description": {
+          "reverse_code": "Not documented by Denon. Default 'R'; change if reverse scan is rejected (NACK).",
+          "ack_timeout_ms": "Protocol specifies 30 ms; more headroom avoids false timeouts."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "timecode": {
+        "name": "Timecode"
+      },
+      "remaining": {
+        "name": "Remaining time"
+      },
+      "elapsed_seconds": {
+        "name": "Elapsed seconds"
+      },
+      "chapter": {
+        "name": "Chapter"
+      },
+      "chapters_total": {
+        "name": "Chapters in title"
+      },
+      "title": {
+        "name": "Title"
+      },
+      "titles_total": {
+        "name": "Titles on disc"
+      },
+      "transport": {
+        "name": "Transport"
+      },
+      "disc": {
+        "name": "Disc status"
+      },
+      "disc_type": {
+        "name": "Disc type"
+      },
+      "audio_format": {
+        "name": "Audio format"
+      },
+      "audio_channels": {
+        "name": "Audio channels"
+      }
+    },
+    "button": {
+      "scan_forward": {
+        "name": "Scan forward"
+      },
+      "scan_reverse": {
+        "name": "Scan reverse"
+      },
+      "next_title": {
+        "name": "Next title"
+      },
+      "previous_title": {
+        "name": "Previous title"
+      },
+      "tray_open": {
+        "name": "Open tray"
+      },
+      "tray_close": {
+        "name": "Close tray"
+      }
+    }
+  },
+  "selector": {
+    "scan_direction": {
+      "options": {
+        "forward": "Forward",
+        "reverse": "Reverse"
+      }
+    },
+    "scan_speed": {
+      "options": {
+        "fast": "Fast",
+        "slow": "Slow"
+      }
+    },
+    "tray_action": {
+      "options": {
+        "open": "Open",
+        "close": "Close"
+      }
+    }
+  },
+  "services": {
+    "goto_chapter": {
+      "name": "Go to chapter",
+      "description": "Jump to a chapter of the current title.",
+      "fields": {
+        "chapter": {
+          "name": "Chapter",
+          "description": "1–2000"
+        }
+      }
+    },
+    "goto_title": {
+      "name": "Go to title",
+      "description": "Jump to a title on the disc.",
+      "fields": {
+        "title": {
+          "name": "Title",
+          "description": "1–2000"
+        }
+      }
+    },
+    "scan": {
+      "name": "Scan",
+      "description": "Search forward or reverse. Play resumes normal playback.",
+      "fields": {
+        "direction": {
+          "name": "Direction",
+          "description": "Forward or reverse."
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Fast search or slow motion."
+        }
+      }
+    },
+    "tray": {
+      "name": "Disc tray",
+      "description": "Open or close the disc tray.",
+      "fields": {
+        "action": {
+          "name": "Action",
+          "description": "Open or close."
+        }
+      }
+    },
+    "send_raw": {
+      "name": "Send raw command",
+      "description": "Send any protocol command and return ACK/NACK and all received packets. For testing.",
+      "fields": {
+        "command": {
+          "name": "Command",
+          "description": "E.g. @0?ST or ?ST (@0 and CR are added)."
+        },
+        "window": {
+          "name": "Listen window",
+          "description": "How long to collect replies."
+        }
+      }
+    }
+  }
+}
