@@ -4,6 +4,13 @@ Protocol (Serial Command Protocol Guide v1.00, IP control on TCP port 9030):
 
 * Packets: ``@`` + ID ``0`` + command + ``\\r``.
 * The device answers every packet with ACK (0x06) or NACK (0x15).
+  Real units (firmware 19xx and later) answer with the ASCII text ``ack`` /
+  ``nack`` instead, and put a ``+`` in front of answer packets
+  (``ack+@0STPP\r``). Both forms are accepted.
+* A connection that is kept open for a long time can go stale: the unit
+  still executes commands but no longer sends anything back. The client
+  therefore closes the connection when idle and after every timeout, so each
+  poll starts on a fresh connection.
   Status requests are answered with ACK followed by an ANSWER packet.
 * Only one command may be outstanding; >= 30 ms between commands.
 * The device may send unsolicited status notifications, which the host
@@ -358,7 +365,7 @@ def apply_packet(state: DN500BDState, body: str) -> str | None:
 
 
 class DN500BDClient:
-    """One persistent TCP connection to a DN-500BD MKII."""
+    """TCP client for a DN-500BD MKII (short-lived connections by default)."""
 
     def __init__(
         self,
@@ -373,6 +380,7 @@ class DN500BDClient:
         reverse_code: str = "R",
         on_packet: Callable[[str, bool], None] | None = None,
         on_disconnect: Callable[[], None] | None = None,
+        idle_close: float | None = 1.0,
     ) -> None:
         """Init. on_packet(body, unsolicited) is called for every packet."""
         self.host = host
@@ -385,6 +393,9 @@ class DN500BDClient:
         self.reverse_code = reverse_code or "R"
         self.on_packet = on_packet
         self.on_disconnect = on_disconnect
+        # Close the connection after this many idle seconds (None = keep open)
+        self.idle_close = idle_close
+        self._idle_handle: asyncio.TimerHandle | None = None
 
         self.state = DN500BDState()
 
@@ -427,6 +438,9 @@ class DN500BDClient:
 
     async def close(self) -> None:
         """Close the connection."""
+        if self._idle_handle is not None:
+            self._idle_handle.cancel()
+            self._idle_handle = None
         task, self._reader_task = self._reader_task, None
         if task is not None:
             task.cancel()
@@ -456,6 +470,7 @@ class DN500BDClient:
         reader = self._reader
         buf = bytearray()
         in_packet = False
+        text = ""  # ASCII outside packets ("ack" / "nack" from real units)
         try:
             while True:
                 chunk = await reader.read(1024)
@@ -473,8 +488,21 @@ class DN500BDClient:
                         continue
                     if byte == START:
                         in_packet = True
+                        text = ""
                         buf.clear()
                         buf.append(byte)
+                    elif 0x41 <= byte <= 0x5A or 0x61 <= byte <= 0x7A:
+                        text = (text + chr(byte).lower())[-4:]
+                        if text.endswith("nack"):
+                            _LOGGER.debug("RX nack (text)")
+                            text = ""
+                            self._resolve_ack(False)
+                        elif text.endswith("ack"):
+                            _LOGGER.debug("RX ack (text)")
+                            text = ""
+                            self._resolve_ack(True)
+                    elif byte in (0x2B, 0x0D, 0x0A, 0x20):
+                        text = ""  # '+' before answers, line ends
                     elif byte == ACK:
                         _LOGGER.debug("RX ACK")
                         self._resolve_ack(True)
@@ -579,6 +607,9 @@ class DN500BDClient:
                             continue
                         # Protocol: after 3 failed attempts send '\r'
                         self._write(b"\r")
+                        # A unit that stops answering on an open connection
+                        # usually answers again on a fresh one.
+                        self._drop_connection(notify=False)
                         raise DN500BDTimeout(f"no ACK for {command!r}") from None
                     if not ok:
                         raise DN500BDNack(f"NACK for {command!r}")
@@ -589,6 +620,7 @@ class DN500BDClient:
                             asyncio.shield(self._answer_fut), self.answer_timeout
                         )
                     except TimeoutError:
+                        self._drop_connection(notify=False)
                         raise DN500BDTimeout(f"no answer for {command!r}") from None
                 return None
             finally:
@@ -601,6 +633,28 @@ class DN500BDClient:
                 self._answer_fut = None
                 self._expect = None
                 self._last_tx = time.monotonic()
+                self._schedule_idle_close()
+
+    def _schedule_idle_close(self) -> None:
+        """Close the connection once nothing has been sent for idle_close s."""
+        if self._idle_handle is not None:
+            self._idle_handle.cancel()
+            self._idle_handle = None
+        if self.idle_close is None or not self.connected:
+            return
+        loop = asyncio.get_running_loop()
+        self._idle_handle = loop.call_later(
+            self.idle_close, lambda: loop.create_task(self._close_if_idle())
+        )
+
+    async def _close_if_idle(self) -> None:
+        self._idle_handle = None
+        if self._lock.locked():
+            return  # a transaction is running; it reschedules when done
+        if time.monotonic() - self._last_tx < (self.idle_close or 0) - 0.01:
+            return
+        _LOGGER.debug("Closing idle connection to %s", self.host)
+        await self.close()
 
     async def command(self, command: str) -> None:
         """Send a control command (never retried)."""
@@ -629,6 +683,7 @@ class DN500BDClient:
             finally:
                 self._capture = None
                 self._last_tx = time.monotonic()
+                self._schedule_idle_close()
         return {
             "sent": packet.decode("latin-1").rstrip("\r"),
             "ack": "<ACK>" in received,

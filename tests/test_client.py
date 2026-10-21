@@ -276,6 +276,80 @@ def test_reconnect_after_server_drop():
     run(go())
 
 
+def test_text_acks():
+    """Real units answer 'ack'/'nack' as text and prefix answers with '+'."""
+    async def go():
+        dev, cli = await _setup()
+        dev.text_acks = True
+        try:
+            assert await cli.query_power() is True
+            await cli.query("transport")
+            assert cli.state.transport_raw == "PL"
+            await cli.pause()
+            await cli.query("transport")
+            assert cli.state.transport_raw == "PP"
+            await cli.query("chapter")
+            assert cli.state.chapter == 3
+            try:
+                await cli.command("ZZZZ")
+            except client_mod.DN500BDNack:
+                pass
+            else:
+                raise AssertionError("expected NACK")
+            res = await cli.raw("?ST", window=0.1)
+            assert res["ack"] and not res["nack"], res
+        finally:
+            await cli.close()
+            await dev.stop()
+
+    run(go())
+
+
+def test_idle_close():
+    """The connection is closed when idle and reopened for the next request."""
+    async def go():
+        dev = FakeDevice()
+        await dev.start()
+        cli = DN500BDClient(
+            "127.0.0.1", dev.port, ack_timeout=0.1, answer_timeout=0.2, idle_close=0.1
+        )
+        try:
+            await cli.query("transport")
+            assert cli.connected
+            await asyncio.sleep(0.25)
+            assert not cli.connected
+            await cli.query("chapter")
+            assert cli.state.chapter == 3 and dev.connections == 2
+        finally:
+            await cli.close()
+            await dev.stop()
+
+    run(go())
+
+
+def test_stale_connection_recovers():
+    """A connection that went silent is dropped; the next poll answers again."""
+    async def go():
+        dev = FakeDevice()
+        dev.text_acks = True
+        dev.stale_first_connection = True
+        await dev.start()
+        cli = DN500BDClient(
+            "127.0.0.1", dev.port, ack_timeout=0.1, answer_timeout=0.2, idle_close=None
+        )
+        try:
+            # executed but silent -> looks off, connection is dropped
+            assert await cli.query_power() is False
+            assert not cli.connected
+            assert await cli.query_power() is True
+            assert dev.connections == 2
+        finally:
+            await cli.close()
+            await dev.stop()
+
+    run(go())
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:

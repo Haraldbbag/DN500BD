@@ -25,6 +25,9 @@ class FakeDevice:
         self.acks_from_host = 0
         self.drop_next_ack = 0  # simulate lost ACKs
         self.busy_next = False
+        self.text_acks = False  # real units: "ack"/"nack" text, "+" before answers
+        self.stale_first_connection = False  # first connection goes silent
+        self.connections = 0
         self._server: asyncio.base_events.Server | None = None
         self._writers: list[asyncio.StreamWriter] = []
         self.port = 0
@@ -46,7 +49,15 @@ class FakeDevice:
             writer.write(f"@0{body}\r".encode("latin-1"))
             await writer.drain()
 
+    def _ack(self) -> bytes:
+        return b"ack" if self.text_acks else ACK
+
+    def _nack(self) -> bytes:
+        return b"nack" if self.text_acks else NACK
+
     async def _client(self, reader, writer) -> None:
+        self.connections += 1
+        silent = self.stale_first_connection and self.connections == 1
         self._writers.append(writer)
         buf = b""
         try:
@@ -61,7 +72,7 @@ class FakeDevice:
                         continue
                     if ch == b"\r":
                         if buf:
-                            await self._handle(buf.decode("latin-1"), writer)
+                            await self._handle(buf.decode("latin-1"), writer, silent)
                         buf = b""
                         continue
                     buf += ch
@@ -69,10 +80,20 @@ class FakeDevice:
             if writer in self._writers:
                 self._writers.remove(writer)
 
-    async def _handle(self, packet: str, writer) -> None:
+    async def _handle(self, packet: str, writer, silent: bool = False) -> None:
         self.received.append(packet)
+        if silent:
+            # stale connection: commands are executed, nothing is sent back
+            class _Null:
+                def write(self, data):
+                    pass
+
+                async def drain(self):
+                    pass
+
+            writer = _Null()
         if not packet.startswith("@0"):
-            writer.write(NACK)
+            writer.write(self._nack())
             return
         cmd = packet[2:]
 
@@ -139,10 +160,11 @@ class FakeDevice:
         elif cmd == "?MA":
             answer = "MA0005CD123456"
         else:
-            writer.write(NACK)
+            writer.write(self._nack())
             return
 
-        writer.write(ACK)
+        writer.write(self._ack())
         if answer is not None:
-            writer.write(f"@0{answer}\r".encode("latin-1"))
+            plus = b"+" if self.text_acks else b""
+            writer.write(plus + f"@0{answer}\r".encode("latin-1"))
         await writer.drain()
