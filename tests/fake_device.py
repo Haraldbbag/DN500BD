@@ -165,6 +165,8 @@ class FakeDevice:
 
         writer.write(self._ack())
         if answer is not None:
-            plus = b"+" if self.text_acks else b""
-            writer.write(plus + f"@0{answer}\r".encode("latin-1"))
+            if self.text_acks:  # real units: "+" before, no '\r' after
+                writer.write(f"+@0{answer}".encode("latin-1"))
+            else:
+                writer.write(f"@0{answer}\r".encode("latin-1"))
         await writer.drain()

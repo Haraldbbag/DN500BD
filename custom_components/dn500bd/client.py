@@ -6,7 +6,9 @@ Protocol (Serial Command Protocol Guide v1.00, IP control on TCP port 9030):
 * The device answers every packet with ACK (0x06) or NACK (0x15).
   Real units (firmware 19xx and later) answer with the ASCII text ``ack`` /
   ``nack`` instead, and put a ``+`` in front of answer packets
-  (``ack+@0STPP\r``). Both forms are accepted.
+  (``ack+@0STPP``). Their answer packets are not terminated by ``\r``; a
+  packet is therefore also complete when no further byte follows within
+  PACKET_IDLE seconds.
 * A connection that is kept open for a long time can go stale: the unit
   still executes commands but no longer sends anything back. The client
   therefore closes the connection when idle and after every timeout, so each
@@ -36,6 +38,7 @@ START = 0x40  # '@'
 END = 0x0D  # '\r'
 DEVICE_ID = "0"
 MAX_PACKET = 600
+PACKET_IDLE = 0.05  # s without data that also ends a packet (no '\r' sent)
 
 # --------------------------------------------------------------------------
 # Exceptions
@@ -462,6 +465,7 @@ class DN500BDClient:
         for fut in (self._ack_fut, self._answer_fut):
             if fut is not None and not fut.done():
                 fut.set_exception(err)
+                fut.exception()  # mark retrieved (futures are awaited via shield)
         if notify and self.on_disconnect is not None:
             self.on_disconnect()
 
@@ -473,7 +477,17 @@ class DN500BDClient:
         text = ""  # ASCII outside packets ("ack" / "nack" from real units)
         try:
             while True:
-                chunk = await reader.read(1024)
+                if in_packet and buf:
+                    try:
+                        chunk = await asyncio.wait_for(reader.read(1024), PACKET_IDLE)
+                    except TimeoutError:
+                        # Real units do not end answers with '\r'
+                        self._handle_packet(bytes(buf).decode("latin-1"))
+                        buf.clear()
+                        in_packet = False
+                        continue
+                else:
+                    chunk = await reader.read(1024)
                 if not chunk:
                     _LOGGER.debug("Connection closed by %s", self.host)
                     break
