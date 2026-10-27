@@ -25,7 +25,7 @@ Home-Assistant-Integration für den Blu-ray-Player **Denon Professional DN-500BD
 | Disc-Typ, Audioformat, Audiokanäle | Diagnose |
 | Laufzeit Sekunden | Zahl, standardmäßig deaktiviert |
 
-**Buttons:** Suchlauf vorwärts, Suchlauf rückwärts, nächster/vorheriger Titel, Lade öffnen/schließen (Lade standardmäßig deaktiviert).
+**Buttons:** Suchlauf vorwärts, Suchlauf rückwärts, nächster/vorheriger Titel, Lade öffnen/schließen (Lade standardmäßig deaktiviert), Menübedienung: Cursor hoch/runter/links/rechts, Enter, Zurück, Top-Menü, Popup-Menü, Home.
 
 **Aktionen** (Ziel: der Media Player)
 | Aktion | Felder |
@@ -34,6 +34,7 @@ Home-Assistant-Integration für den Blu-ray-Player **Denon Professional DN-500BD
 | `dn500bd.goto_title` | `title` 1–2000 |
 | `dn500bd.scan` | `direction` forward/reverse, `speed` fast/slow – mit Play zurück zur Normalwiedergabe |
 | `dn500bd.tray` | `action` open/close |
+| `dn500bd.send_key` | `key`: `up`, `down`, `left`, `right`, `enter`, `return`, `top_menu`, `popup_menu`, `home`, `setup`, `option` |
 | `dn500bd.send_raw` | `command` (z. B. `@0?ST`), `window` – liefert ACK/NACK und alle empfangenen Pakete als Antwort zurück |
 
 Ein Locate auf Timecode gibt es nicht – das Protokoll bietet dafür keinen Befehl.

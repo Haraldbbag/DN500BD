@@ -21,11 +21,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import DN500BDConfigEntry
-from .client import PAUSED_TRANSPORTS, PLAYING_TRANSPORTS, DN500BDError
+from .client import PAUSED_TRANSPORTS, PLAYING_TRANSPORTS, REMOTE_KEYS, DN500BDError
 from .const import (
     SERVICE_GOTO_CHAPTER,
     SERVICE_GOTO_TITLE,
     SERVICE_SCAN,
+    SERVICE_SEND_KEY,
     SERVICE_SEND_RAW,
     SERVICE_TRAY,
 )
@@ -73,6 +74,11 @@ async def async_setup_entry(
         SERVICE_TRAY,
         {vol.Required("action"): vol.In(["open", "close"])},
         "async_tray",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SEND_KEY,
+        {vol.Required("key"): vol.In(list(REMOTE_KEYS))},
+        "async_send_key",
     )
     platform.async_register_entity_service(
         SERVICE_SEND_RAW,
@@ -223,6 +229,10 @@ class DN500BDMediaPlayer(DN500BDEntity, MediaPlayerEntity):
     async def async_tray(self, action: str) -> None:
         """Open/close tray."""
         await self._run(self.client.tray(action == "open"))
+
+    async def async_send_key(self, key: str) -> None:
+        """Send a remote key for menu navigation."""
+        await self._run(self.client.send_key(key))
 
     async def async_send_raw(self, command: str, window: float = 0.6) -> ServiceResponse:
         """Send any command and return what came back (for testing)."""

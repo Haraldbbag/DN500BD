@@ -95,6 +95,33 @@
       },
       "tray_close": {
         "name": "Close tray"
+      },
+      "key_up": {
+        "name": "Cursor up"
+      },
+      "key_down": {
+        "name": "Cursor down"
+      },
+      "key_left": {
+        "name": "Cursor left"
+      },
+      "key_right": {
+        "name": "Cursor right"
+      },
+      "key_enter": {
+        "name": "Enter"
+      },
+      "key_return": {
+        "name": "Return"
+      },
+      "key_top_menu": {
+        "name": "Top menu"
+      },
+      "key_popup_menu": {
+        "name": "Pop-up menu"
+      },
+      "key_home": {
+        "name": "Home"
       }
     }
   },
@@ -115,6 +142,21 @@
       "options": {
         "open": "Open",
         "close": "Close"
+      }
+    },
+    "remote_key": {
+      "options": {
+        "up": "Cursor up",
+        "down": "Cursor down",
+        "left": "Cursor left",
+        "right": "Cursor right",
+        "enter": "Enter",
+        "return": "Return",
+        "top_menu": "Top menu",
+        "popup_menu": "Pop-up menu",
+        "home": "Home",
+        "setup": "Setup",
+        "option": "Option"
       }
     }
   },
@@ -160,6 +202,16 @@
         "action": {
           "name": "Action",
           "description": "Open or close."
+        }
+      }
+    },
+    "send_key": {
+      "name": "Remote key",
+      "description": "Send a key for menu navigation (cursor, enter, return, menus).",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "The key to send."
         }
       }
     },

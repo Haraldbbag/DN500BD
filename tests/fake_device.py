@@ -133,6 +133,11 @@ class FakeDevice:
             self.transport = "DVF" + cmd[5]
         elif cmd in ("PCDTRYOP", "PCDTRYCL"):
             self.disc = "TO" if cmd.endswith("OP") else "TC"
+        elif cmd in (
+            "PCCUSR1", "PCCUSR2", "PCCUSR3", "PCCUSR4", "PCENTR", "PCRTN",
+            "DVTP", "DVPU", "PCHM", "PCSU", "DVOP",
+        ):
+            pass  # menu keys: ACK only
         elif cmd == "?ST":
             answer = f"ST{self.transport}"
         elif cmd == "?CD":

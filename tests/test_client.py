@@ -129,6 +129,18 @@ def test_controls():
             assert dev.received[-1] == "@0PCSLSFs"
             await cli.tray(True)
             assert dev.received[-1] == "@0PCDTRYOP"
+            for key, code in (
+                ("up", "PCCUSR3"),
+                ("down", "PCCUSR4"),
+                ("left", "PCCUSR1"),
+                ("right", "PCCUSR2"),
+                ("enter", "PCENTR"),
+                ("return", "PCRTN"),
+                ("top_menu", "DVTP"),
+                ("popup_menu", "DVPU"),
+            ):
+                await cli.send_key(key)
+                assert dev.received[-1] == "@0" + code
         finally:
             await cli.close()
             await dev.stop()

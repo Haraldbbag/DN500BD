@@ -68,6 +68,31 @@ tray:
             - open
             - close
 
+send_key:
+  target:
+    entity:
+      integration: dn500bd
+      domain: media_player
+  fields:
+    key:
+      required: true
+      example: enter
+      selector:
+        select:
+          translation_key: remote_key
+          options:
+            - up
+            - down
+            - left
+            - right
+            - enter
+            - return
+            - top_menu
+            - popup_menu
+            - home
+            - setup
+            - option
+
 send_raw:
   target:
     entity:

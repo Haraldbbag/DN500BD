@@ -84,6 +84,22 @@ TRANSPORT_CODES: dict[str, str] = {
     "DVHM": "home",
 }
 
+# Remote keys for menu navigation (Protocol Guide v1.1, pages 7-8).
+# Note: the guide numbers the cursor keys 1=left, 2=right, 3=up, 4=down.
+REMOTE_KEYS: dict[str, str] = {
+    "up": "PCCUSR3",
+    "down": "PCCUSR4",
+    "left": "PCCUSR1",
+    "right": "PCCUSR2",
+    "enter": "PCENTR",
+    "return": "PCRTN",
+    "top_menu": "DVTP",
+    "popup_menu": "DVPU",
+    "home": "PCHM",
+    "setup": "PCSU",
+    "option": "DVOP",
+}
+
 # Transport states that mean "picture is moving"
 PLAYING_TRANSPORTS = {
     "play",
@@ -796,6 +812,12 @@ class DN500BDClient:
         dir_code = "F" if direction == "forward" else self.reverse_code
         speed_code = "f" if speed == "fast" else "s"
         await self.command(f"PCSLS{dir_code}{speed_code}")
+
+    async def send_key(self, key: str) -> None:
+        """Send a remote key (see REMOTE_KEYS)."""
+        if key not in REMOTE_KEYS:
+            raise ValueError(f"unknown key {key!r}")
+        await self.command(REMOTE_KEYS[key])
 
     async def tray(self, open_tray: bool) -> None:
         """Open/close disc tray."""

@@ -95,6 +95,33 @@
       },
       "tray_close": {
         "name": "Lade schließen"
+      },
+      "key_up": {
+        "name": "Cursor hoch"
+      },
+      "key_down": {
+        "name": "Cursor runter"
+      },
+      "key_left": {
+        "name": "Cursor links"
+      },
+      "key_right": {
+        "name": "Cursor rechts"
+      },
+      "key_enter": {
+        "name": "Enter"
+      },
+      "key_return": {
+        "name": "Zurück"
+      },
+      "key_top_menu": {
+        "name": "Top-Menü"
+      },
+      "key_popup_menu": {
+        "name": "Popup-Menü"
+      },
+      "key_home": {
+        "name": "Home"
       }
     }
   },
@@ -115,6 +142,21 @@
       "options": {
         "open": "Öffnen",
         "close": "Schließen"
+      }
+    },
+    "remote_key": {
+      "options": {
+        "up": "Cursor hoch",
+        "down": "Cursor runter",
+        "left": "Cursor links",
+        "right": "Cursor rechts",
+        "enter": "Enter",
+        "return": "Zurück",
+        "top_menu": "Top-Menü",
+        "popup_menu": "Popup-Menü",
+        "home": "Home",
+        "setup": "Setup",
+        "option": "Option"
       }
     }
   },
@@ -160,6 +202,16 @@
         "action": {
           "name": "Aktion",
           "description": "Öffnen oder schließen."
+        }
+      }
+    },
+    "send_key": {
+      "name": "Fernbedienungstaste",
+      "description": "Sendet eine Taste zur Menübedienung (Cursor, Enter, Zurück, Menüs).",
+      "fields": {
+        "key": {
+          "name": "Taste",
+          "description": "Welche Taste gesendet wird."
         }
       }
     },
