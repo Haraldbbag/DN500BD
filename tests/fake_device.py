@@ -26,6 +26,7 @@ class FakeDevice:
         self.drop_next_ack = 0  # simulate lost ACKs
         self.busy_next = False
         self.text_acks = False  # real units: "ack"/"nack" text, "+" before answers
+        self.bare_time = False  # real units: ?ET/?RM answered as bare digits
         self.stale_first_connection = False  # first connection goes silent
         self.connections = 0
         self._server: asyncio.base_events.Server | None = None
@@ -169,7 +170,10 @@ class FakeDevice:
             return
 
         writer.write(self._ack())
-        if answer is not None:
+        if answer is not None and self.bare_time and answer[:2] in ("ET", "RM"):
+            # seen on a real DN-500BD MKII: "ack0000052", no "@0ET", no '\r'
+            writer.write(answer[2:].encode("latin-1"))
+        elif answer is not None:
             if self.text_acks:  # real units: "+" before, no '\r' after
                 writer.write(f"+@0{answer}".encode("latin-1"))
             else:

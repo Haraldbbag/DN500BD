@@ -38,6 +38,8 @@ START = 0x40  # '@'
 END = 0x0D  # '\r'
 DEVICE_ID = "0"
 MAX_PACKET = 600
+# Answers that real units send as bare digits after "ack"
+BARE_DIGIT_ANSWERS = ("ET", "RM")
 PACKET_IDLE = 0.05  # s without data that also ends a packet (no '\r' sent)
 
 # --------------------------------------------------------------------------
@@ -491,16 +493,23 @@ class DN500BDClient:
         buf = bytearray()
         in_packet = False
         text = ""  # ASCII outside packets ("ack" / "nack" from real units)
+        # Characters outside a packet. Real units answer ?ET/?RM with the
+        # bare digits after "ack" (e.g. "ack0000052"), without "@0ET".
+        bare = bytearray()
         try:
             while True:
-                if in_packet and buf:
+                if (in_packet and buf) or bare:
                     try:
                         chunk = await asyncio.wait_for(reader.read(1024), PACKET_IDLE)
                     except TimeoutError:
-                        # Real units do not end answers with '\r'
-                        self._handle_packet(bytes(buf).decode("latin-1"))
-                        buf.clear()
-                        in_packet = False
+                        if in_packet and buf:
+                            # Real units do not end answers with '\r'
+                            self._handle_packet(bytes(buf).decode("latin-1"))
+                            buf.clear()
+                            in_packet = False
+                        if bare:
+                            self._handle_bare(bytes(bare).decode("latin-1"))
+                            bare.clear()
                         continue
                 else:
                     chunk = await reader.read(1024)
@@ -517,27 +526,42 @@ class DN500BDClient:
                             buf.append(byte)
                         continue
                     if byte == START:
+                        if bare:
+                            self._handle_bare(bytes(bare).decode("latin-1"))
+                            bare.clear()
                         in_packet = True
                         text = ""
                         buf.clear()
                         buf.append(byte)
                     elif 0x41 <= byte <= 0x5A or 0x61 <= byte <= 0x7A:
                         text = (text + chr(byte).lower())[-4:]
+                        bare.append(byte)
                         if text.endswith("nack"):
                             _LOGGER.debug("RX nack (text)")
                             text = ""
+                            bare.clear()
                             self._resolve_ack(False)
                         elif text.endswith("ack"):
                             _LOGGER.debug("RX ack (text)")
                             text = ""
+                            bare.clear()
                             self._resolve_ack(True)
+                    elif 0x30 <= byte <= 0x39:
+                        text = ""
+                        if len(bare) < MAX_PACKET:
+                            bare.append(byte)
                     elif byte in (0x2B, 0x0D, 0x0A, 0x20):
                         text = ""  # '+' before answers, line ends
+                        if byte in (0x0D, 0x0A) and bare:
+                            self._handle_bare(bytes(bare).decode("latin-1"))
+                            bare.clear()
                     elif byte == ACK:
                         _LOGGER.debug("RX ACK")
+                        bare.clear()
                         self._resolve_ack(True)
                     elif byte == NACK:
                         _LOGGER.debug("RX NACK")
+                        bare.clear()
                         self._resolve_ack(False)
                     else:
                         _LOGGER.debug("RX stray byte 0x%02x", byte)
@@ -554,6 +578,28 @@ class DN500BDClient:
         fut = self._ack_fut
         if fut is not None and not fut.done():
             fut.set_result(ok)
+
+    def _handle_bare(self, raw: str) -> None:
+        """Text that came without '@0' (real units answer ?ET/?RM this way).
+
+        "0000052" while ?ET is pending -> "ET0000052". Text that already
+        starts with the expected prefix is taken as it is.
+        """
+        _LOGGER.debug("RX bare %r", raw)
+        expect = self._expect
+        body: str | None = None
+        if expect is not None:
+            for prefix in expect:
+                if raw.startswith(prefix):
+                    body = raw
+                    break
+            if body is None and raw.isdigit() and expect[0] in BARE_DIGIT_ANSWERS:
+                body = expect[0] + raw
+        if body is None:
+            if self._capture is not None:
+                self._capture.append(raw)
+            return
+        self._handle_packet("@" + DEVICE_ID + body)
 
     def _handle_packet(self, raw: str) -> None:
         _LOGGER.debug("RX %r", raw)

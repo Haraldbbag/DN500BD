@@ -317,6 +317,34 @@ def test_text_acks():
     run(go())
 
 
+def test_bare_time_answers():
+    """Real units answer ?ET/?RM with bare digits after 'ack'."""
+    async def go():
+        dev, cli = await _setup()
+        dev.text_acks = True
+        dev.bare_time = True
+        try:
+            await cli.query("elapsed")
+            await cli.query("remaining")
+            assert cli.state.elapsed == dev_seconds(dev.elapsed), cli.state
+            assert cli.state.remaining == dev_seconds(dev.remaining), cli.state
+            assert cli.state.duration == cli.state.elapsed + cli.state.remaining
+            # other answers still work afterwards
+            await cli.query("transport")
+            assert cli.state.transport_raw == "PL"
+            res = await cli.raw("?ET", window=0.1)
+            assert res["ack"] and dev.elapsed in res["received"], res
+        finally:
+            await cli.close()
+            await dev.stop()
+
+    run(go())
+
+
+def dev_seconds(value: str) -> int:
+    return client_mod.parse_time(value)
+
+
 def test_idle_close():
     """The connection is closed when idle and reopened for the next request."""
     async def go():

@@ -18,6 +18,7 @@ Home-Assistant-Integration für den Blu-ray-Player **Denon Professional DN-500BD
 |---|---|
 | Timecode | Laufzeit `H:MM:SS` |
 | Restzeit | `H:MM:SS` |
+| Gesamtdauer | Laufzeit + Restzeit, `H:MM:SS` |
 | Kapitel / Kapitel im Titel | aktuelles Kapitel, Anzahl Kapitel im aktuellen Titel |
 | Titel / Titel auf Disc | aktueller Titel, Anzahl Titel |
 | Transport | `play`, `pause`, `scan_forward`, `scan_reverse`, `slow_forward`, `step`, `menu`, `home` … |
@@ -82,7 +83,7 @@ recorder:
 Die Doku lässt einiges offen. Das Probe-Skript prüft genau diese Punkte:
 
 1. **Rückwärts-Suchlauf:** dokumentiert ist nur `F`. Vermutet wird `@0PCSLSRf`.
-2. **Bezug von ET/RM:** Zeit im Titel oder im Kapitel? Einfluss des Time Mode (`PCTMD`)?
+2. **Bezug von ET/RM:** Zeit im Titel oder im Kapitel? Einfluss des Time Mode (`PCTMD`)? Am Gerät geprüft: `?ET`/`?RM` kommen als nackte Ziffern direkt nach `ack` zurück (z. B. `ack0000052`), ohne `@0ET` – wird seit 0.1.4 so ausgewertet. Ohne laufenden Titel (Menü) kommt nur `ack`.
 3. **Stop-Status:** Für Stop ist keine `@0?ST`-Antwort dokumentiert.
 4. **Unaufgeforderte Statusmeldungen:** Laut Tabelle gibt es keine, laut Kapitel 3-4-3 schon.
 5. **Antwortformat** von `?PCTG`/`?PCGp` (Doku zeigt die Antwort mit `?`; beide Varianten werden akzeptiert).
