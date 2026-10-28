@@ -40,6 +40,12 @@ SENSORS: tuple[DN500BDSensorDescription, ...] = (
         value_fn=lambda s: format_time(s.remaining),
     ),
     DN500BDSensorDescription(
+        key="duration",
+        translation_key="duration",
+        icon="mdi:timer",
+        value_fn=lambda s: format_time(s.duration),
+    ),
+    DN500BDSensorDescription(
         key="elapsed_seconds",
         translation_key="elapsed_seconds",
         device_class=SensorDeviceClass.DURATION,

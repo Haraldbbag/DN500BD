@@ -46,6 +46,9 @@
       "remaining": {
         "name": "Restzeit"
       },
+      "duration": {
+        "name": "Gesamtdauer"
+      },
       "elapsed_seconds": {
         "name": "Laufzeit Sekunden"
       },

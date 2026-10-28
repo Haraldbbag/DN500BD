@@ -46,6 +46,9 @@
       "remaining": {
         "name": "Remaining time"
       },
+      "duration": {
+        "name": "Total time"
+      },
       "elapsed_seconds": {
         "name": "Elapsed seconds"
       },
